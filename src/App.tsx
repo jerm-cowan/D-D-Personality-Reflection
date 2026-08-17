@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { PageLayout } from '@/components/layout/PageLayout'
+import { ScrollToTop } from '@/components/layout/ScrollToTop'
 import { LandingPage } from '@/pages/LandingPage'
 import { SetupPage } from '@/pages/SetupPage'
 import { AssessmentPage } from '@/pages/AssessmentPage'
@@ -11,6 +12,7 @@ export default function App() {
   return (
     <AssessmentProvider>
     <BrowserRouter>
+      <ScrollToTop />
       <PageLayout>
         <Routes>
           <Route path="/"            element={<LandingPage />} />

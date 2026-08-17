@@ -85,7 +85,6 @@ export function ResultsPage() {
   const [cardsReady, setCardsReady] = useState(false)
 
   useEffect(() => {
-    window.scrollTo(0, 0)
     // Cards wait for the D20 pulse → icon illuminate sequence to complete
     const t = setTimeout(() => setCardsReady(true), 5500)
     return () => clearTimeout(t)
