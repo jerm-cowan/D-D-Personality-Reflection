@@ -49,6 +49,7 @@ export type AssessmentMode = 'self' | 'character';
 export interface Recommendation {
   name: string;
   explanation: string;
+  rationale: string;
 }
 
 export interface AdventurerProfile {
