@@ -412,7 +412,7 @@ function buildCategoryRationale(
   winner: string,
   scores: Partial<Record<string, number>>,
 ): string {
-  const total    = Object.values(scores).reduce((a, b) => a + (b ?? 0), 0)
+  const total    = Object.values(scores).reduce<number>((a, b) => a + (b ?? 0), 0)
   const winScore = scores[winner] ?? 0
   const pct      = total > 0 ? Math.round((winScore / total) * 100) : 0
 
