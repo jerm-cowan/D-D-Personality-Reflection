@@ -165,15 +165,55 @@ const ANCHORS: AnchorDef[] = [
 const PROFILE_PATH = 'M 144 135 L 1296 135 L 1296 765 L 144 765 Z'
 const PROFILE_PERIM = 3564
 
-// Lucide icon scale: render at 18px within a 24px viewBox, centered at (0,0)
-const ICON_SCALE  =  18 / 24   // 0.75
-const ICON_OFFSET = -(18 / 2)  // -9
+// Lucide icon scale: render at 26px within a 24px viewBox, centered at (0,0)
+const ICON_SIZE   = 26
+const ICON_SCALE  = ICON_SIZE / 24
+const ICON_OFFSET = -(ICON_SIZE / 2)
+
+// Gradual rotation: full landscape at ≥2050px, fully rotated at ≤700px
+const ROT_START = 2050
+const ROT_END   = 700
+// Anchors are 315 SVG units above/below CY (|135-450| = |765-450| = 315)
+const ANCHOR_DY = 315
+// Minimum buffer (in SVG units) between a rotated anchor and the clipped edge
+const ANCHOR_EDGE_MARGIN = 38
+
+function getMapTransform(vw: number, vh: number) {
+  const t = Math.max(0, Math.min(1, (ROT_START - vw) / (ROT_START - ROT_END)))
+  const angle    = t * 90
+  const rawScale = 1 - t * 0.35  // 1.0 → 0.65
+
+  // After a CSS rotate(angle) the anchor's screen-x = CX ± ANCHOR_DY * groupScale.
+  // We compute the SVG's actual render scale (preserveAspectRatio slice) from both
+  // dimensions so we can clamp groupScale to guarantee anchors stay visible.
+  const svgRenderScale = Math.max(vw / 1440, vh / 900)
+  const visibleHalfX   = vw / svgRenderScale / 2          // SVG units from CX to visible edge
+  const maxSafeScale   = (visibleHalfX - ANCHOR_EDGE_MARGIN) / ANCHOR_DY
+  // Only apply the clamp when rotation is active; never collapse below 0.38
+  const scale = t > 0
+    ? Math.min(rawScale, Math.max(0.38, maxSafeScale))
+    : 1
+
+  return { angle, scale }
+}
 
 export function ConstellationBackground({
   variant = 'ambient',
   revealed = false,
 }: ConstellationBackgroundProps) {
   const [animated, setAnimated] = useState(false)
+
+  // Track both width and height — SVG slice scale depends on both dimensions
+  const [viewport, setViewport] = useState(() => ({
+    w: typeof window !== 'undefined' ? window.innerWidth  : 1440,
+    h: typeof window !== 'undefined' ? window.innerHeight : 900,
+  }))
+
+  useEffect(() => {
+    const onResize = () => setViewport({ w: window.innerWidth, h: window.innerHeight })
+    window.addEventListener('resize', onResize, { passive: true })
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
 
   useEffect(() => {
     if (revealed) {
@@ -183,6 +223,8 @@ export function ConstellationBackground({
       setAnimated(false)
     }
   }, [revealed])
+
+  const { angle, scale: mapScale } = getMapTransform(viewport.w, viewport.h)
 
   const isLanding = variant === 'landing'
   const isResults = variant === 'results'
@@ -218,12 +260,20 @@ export function ConstellationBackground({
         </defs>
 
         {/*
-          Single coordinate-system group for all constellation content.
-          .constellation-rotate applies a 90° rotation on mobile so the
-          4-corner layout becomes top/right/bottom/left (portrait-friendly).
-          .constellation-transition enables the smooth animated rotation.
+          Single group for all constellation content.
+          angle (0–90°) and mapScale (1.0–0.65) are computed from viewport width
+          so the layout rotates and scales continuously as the window narrows.
+          Icons counter-rotate so they always face upright.
         */}
-        <g className="constellation-rotate constellation-transition">
+        <g
+          style={{
+            transform: angle > 0
+              ? `rotate(${angle.toFixed(2)}deg) scale(${mapScale.toFixed(4)})`
+              : undefined,
+            transformOrigin: `${CX}px ${CY}px`,
+            transition: 'transform 0.15s ease-out',
+          }}
+        >
 
           {/* D20 icosahedron outline */}
           <g
@@ -302,20 +352,24 @@ export function ConstellationBackground({
                 }}
               >
                 {/* Dark surface so icon reads against the star field */}
-                <circle r={14} fill="var(--color-surface)" opacity={0.9} />
+                <circle r={20} fill="var(--color-surface)" opacity={0.9} />
                 {/* Gold ring that constellation lines connect to */}
                 <circle
-                  r={16}
+                  r={22}
                   fill={animated ? 'url(#cg-goldGlow)' : 'none'}
                   stroke="var(--color-primary)"
                   strokeWidth="0.9"
                 />
-                {/* Lucide icon inlined: translate(-9,-9) centers 18px icon at origin */}
+                {/*
+                  Icon is translated/scaled to fill the ring.
+                  rotate(-angle, 12, 12) counter-rotates within the icon's own
+                  24px coordinate space so it stays upright when the parent rotates.
+                */}
                 <g
-                  transform={`translate(${ICON_OFFSET}, ${ICON_OFFSET}) scale(${ICON_SCALE})`}
+                  transform={`translate(${ICON_OFFSET}, ${ICON_OFFSET}) scale(${ICON_SCALE.toFixed(4)}) rotate(${(-angle).toFixed(2)}, 12, 12)`}
                   stroke="var(--color-primary)"
                   fill="none"
-                  strokeWidth={1.6}
+                  strokeWidth={1.5}
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 >
@@ -325,7 +379,7 @@ export function ConstellationBackground({
                 {/* Ripple ring that expands on reveal */}
                 {animated && (
                   <circle
-                    r={18}
+                    r={26}
                     fill="none"
                     stroke="var(--color-primary)"
                     strokeWidth="1"

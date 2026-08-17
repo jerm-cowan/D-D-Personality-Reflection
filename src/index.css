@@ -156,21 +156,3 @@ a:hover {
 .twinkle-c { animation: twinkle 2.8s ease-in-out 1.4s infinite; }
 .twinkle-d { animation: twinkle 5.0s ease-in-out 0.3s infinite; }
 .twinkle-e { animation: twinkle 3.7s ease-in-out 2.1s infinite; }
-
-/* ── Constellation responsive rotation ──────────────────────────────── */
-/*
-  On narrow viewports the constellation group rotates 90° around the
-  D20 center (720,450) so the 4 corner anchor nodes shift to top/right/
-  bottom/left — portrait-friendly without separate layout code.
-  The transition creates a "D20 roll" feel when crossing the breakpoint.
-*/
-.constellation-transition {
-  transition: transform 0.9s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-@media (max-width: 768px) {
-  .constellation-rotate {
-    transform: rotate(90deg) scale(0.55);
-    transform-origin: 720px 450px;
-  }
-}

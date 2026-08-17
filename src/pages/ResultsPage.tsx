@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Shield, Sword, Scale, BookOpen, Scroll } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -85,6 +86,8 @@ function RecommendationCard({
 export function ResultsPage() {
   const navigate = useNavigate()
   const { answers, setup, resetAssessment } = useAssessment()
+
+  useEffect(() => { window.scrollTo(0, 0) }, [])
 
   const answeredCount = Object.keys(answers).length
   if (answeredCount < questions.length) {
