@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Shield, Sword, Scale, BookOpen, Scroll } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -48,33 +48,29 @@ function RecommendationCard({
       className="relative overflow-hidden reveal-card"
       style={{ animationDelay: `${animationDelay}ms` }}
     >
-      {/* Gold left accent bar */}
-      <div
-        className="absolute inset-y-0 left-0 w-1 rounded-l-[var(--radius-large)] bg-[var(--color-primary)]"
-        aria-hidden="true"
-      />
-
-      <CardContent className="flex flex-col gap-5 py-7 pl-8 pr-7">
-        {/* Category header */}
-        <div className="flex items-center gap-2">
-          <Icon size={14} className="text-[var(--color-primary)] shrink-0" aria-hidden="true" />
-          <Badge variant="primary" className="text-label">{label}</Badge>
-          <span className="ml-auto text-body-sm text-[var(--color-foreground-muted)] tabular-nums">
+      <CardContent className="flex flex-col gap-5 py-7 px-7">
+        {/* Constellation-node style icon — animates in matching the SVG node aesthetic */}
+        <div className="flex items-start gap-4">
+          <div
+            className="icon-land shrink-0 flex items-center justify-center rounded-full w-12 h-12 bg-[var(--color-surface)] border border-[var(--color-primary)]"
+            style={{ animationDelay: `${animationDelay}ms` }}
+          >
+            <Icon size={22} className="text-[var(--color-primary)]" aria-hidden="true" />
+          </div>
+          <div className="flex flex-col gap-1 min-w-0 flex-1 pt-1">
+            <span className="text-label text-[var(--color-primary)] tracking-widest">{label}</span>
+            <h2 className="text-display-sm text-[var(--color-foreground)]">{rec.name}</h2>
+          </div>
+          <span className="text-body-sm text-[var(--color-foreground-muted)] tabular-nums shrink-0 pt-2">
             {String(entryNumber).padStart(2, '0')}
           </span>
         </div>
 
-        {/* Recommendation name — the most prominent element */}
-        <h2 className="text-display-sm text-[var(--color-foreground)]">{rec.name}</h2>
-
         <div className="border-t border-[var(--color-border-muted)]" aria-hidden="true" />
 
-        {/* Explanation */}
         <p className="text-body-md text-[var(--color-foreground)] leading-relaxed">
           {rec.explanation}
         </p>
-
-        {/* Per-category rationale */}
         <p className="text-body-sm text-[var(--color-foreground-muted)] leading-relaxed">
           {rec.rationale}
         </p>
@@ -86,8 +82,14 @@ function RecommendationCard({
 export function ResultsPage() {
   const navigate = useNavigate()
   const { answers, setup, resetAssessment } = useAssessment()
+  const [cardsReady, setCardsReady] = useState(false)
 
-  useEffect(() => { window.scrollTo(0, 0) }, [])
+  useEffect(() => {
+    window.scrollTo(0, 0)
+    // Cards wait for the D20 pulse → icon illuminate sequence to complete
+    const t = setTimeout(() => setCardsReady(true), 5500)
+    return () => clearTimeout(t)
+  }, [])
 
   const answeredCount = Object.keys(answers).length
   if (answeredCount < questions.length) {
@@ -115,61 +117,66 @@ export function ResultsPage() {
   return (
     <Container size="md" className="py-16 flex flex-col gap-10">
 
-      {/* Dossier header */}
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center gap-2 flex-wrap">
-          <Badge variant="primary" className="text-label">Recommendation Dossier</Badge>
-          {isCharacterMode && (
-            <Badge variant="accent" className="text-label">Character Mode</Badge>
-          )}
-        </div>
-        <h1 className="text-display-md text-[var(--color-foreground)]">
-          {name ?? 'Adventurer Profile'}
-        </h1>
-        <p className="text-body-md text-[var(--color-foreground-muted)]">
-          {name
-            ? `Four foundational D&D character recommendations based on ${name}'s responses.`
-            : 'Four foundational D&D character recommendations based on your responses.'}
-        </p>
-      </div>
+      {/* Dossier header and cards are hidden until the constellation sequence completes */}
+      {cardsReady && (
+        <>
+          {/* Dossier header */}
+          <div className="reveal-card flex flex-col gap-4" style={{ animationDelay: '0ms' }}>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Badge variant="primary" className="text-label">Recommendation Dossier</Badge>
+              {isCharacterMode && (
+                <Badge variant="accent" className="text-label">Character Mode</Badge>
+              )}
+            </div>
+            <h1 className="text-display-md text-[var(--color-foreground)]">
+              {name ?? 'Adventurer Profile'}
+            </h1>
+            <p className="text-body-md text-[var(--color-foreground-muted)]">
+              {name
+                ? `Four foundational D&D character recommendations based on ${name}'s responses.`
+                : 'Four foundational D&D character recommendations based on your responses.'}
+            </p>
+          </div>
 
-      <OrnamentalDivider />
+          <OrnamentalDivider />
 
-      {/* Recommendation cards with stagger */}
-      <div className="flex flex-col gap-5">
-        <RecommendationCard categoryKey="race"       rec={profile.race}       entryNumber={1} animationDelay={200}  />
-        <RecommendationCard categoryKey="class"      rec={profile.class}      entryNumber={2} animationDelay={450}  />
-        <RecommendationCard categoryKey="alignment"  rec={profile.alignment}  entryNumber={3} animationDelay={700}  />
-        <RecommendationCard categoryKey="background" rec={profile.background} entryNumber={4} animationDelay={950}  />
-      </div>
+          {/* Recommendation cards — stagger after header */}
+          <div className="flex flex-col gap-5">
+            <RecommendationCard categoryKey="race"       rec={profile.race}       entryNumber={1} animationDelay={0}    />
+            <RecommendationCard categoryKey="class"      rec={profile.class}      entryNumber={2} animationDelay={375}  />
+            <RecommendationCard categoryKey="alignment"  rec={profile.alignment}  entryNumber={3} animationDelay={750}  />
+            <RecommendationCard categoryKey="background" rec={profile.background} entryNumber={4} animationDelay={1125} />
+          </div>
 
-      <OrnamentalDivider />
+          <OrnamentalDivider />
 
-      {/* Overall rationale panel */}
-      <div
-        className="reveal-card rounded-[var(--radius-large)] border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-8 flex flex-col gap-4"
-        style={{ animationDelay: '1200ms' }}
-      >
-        <div className="flex items-center gap-2">
-          <Scroll size={14} className="text-[var(--color-primary)] shrink-0" aria-hidden="true" />
-          <span className="text-label text-[var(--color-primary)] tracking-widest">
-            Why These Recommendations Work Together
-          </span>
-        </div>
-        <p className="text-body-md text-[var(--color-foreground-muted)] leading-relaxed">
-          {profile.rationale}
-        </p>
-      </div>
+          {/* Overall rationale panel */}
+          <div
+            className="reveal-card rounded-[var(--radius-large)] border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-8 flex flex-col gap-4"
+            style={{ animationDelay: '1450ms' }}
+          >
+            <div className="flex items-center gap-2">
+              <Scroll size={14} className="text-[var(--color-primary)] shrink-0" aria-hidden="true" />
+              <span className="text-label text-[var(--color-primary)] tracking-widest">
+                Why These Recommendations Work Together
+              </span>
+            </div>
+            <p className="text-body-md text-[var(--color-foreground-muted)] leading-relaxed">
+              {profile.rationale}
+            </p>
+          </div>
 
-      {/* Actions */}
-      <div className="flex justify-between items-center pt-2">
-        <Button variant="secondary" size="md" onClick={() => navigate('/review')}>
-          Back to Review
-        </Button>
-        <Button variant="primary" size="md" onClick={handleRetake}>
-          Retake Assessment
-        </Button>
-      </div>
+          {/* Actions */}
+          <div className="flex justify-between items-center pt-2">
+            <Button variant="secondary" size="md" onClick={() => navigate('/review')}>
+              Back to Review
+            </Button>
+            <Button variant="primary" size="md" onClick={handleRetake}>
+              Retake Assessment
+            </Button>
+          </div>
+        </>
+      )}
 
     </Container>
   )

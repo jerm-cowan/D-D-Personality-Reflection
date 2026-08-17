@@ -145,6 +145,41 @@ a:hover {
   to   { stroke-dashoffset: 0; }
 }
 
+/* ── Results page animation sequence ────────────────────────────────── */
+/* D20 strokes brighten, peak, then fade back — the pulse that charges the network */
+@keyframes d20-glow-pulse {
+  0%   { opacity: 0.05; }
+  18%  { opacity: 0.82; }
+  50%  { opacity: 0.15; }
+  100% { opacity: 0.05; }
+}
+
+/* Constellation lines surge slightly after the D20 peak — wave travelling outward */
+@keyframes line-surge {
+  0%   { opacity: 0.10; }
+  40%  { opacity: 0.65; }
+  75%  { opacity: 0.16; }
+  100% { opacity: 0.10; }
+}
+
+/* Corner icon disappears clockwise-staggered before reappearing in the card */
+@keyframes icon-fade-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/* Card icon "lands" from the constellation into the card with a bright flash */
+@keyframes icon-land {
+  0%   { transform: scale(1.1);  box-shadow: 0 0 0 2px var(--color-primary), 0 0 30px 8px rgba(201,168,76,0.5); opacity: 0; }
+  18%  { opacity: 1; }
+  70%  { transform: scale(1.02); }
+  100% { transform: scale(1);    box-shadow: 0 0 0 1px rgba(201,168,76,0.65), 0 0 10px 2px rgba(201,168,76,0.2); opacity: 1; }
+}
+
+.icon-land {
+  animation: icon-land 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 /* ── Animation Utilities ────────────────────────────────────── */
 .reveal-card {
   animation: card-reveal 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;

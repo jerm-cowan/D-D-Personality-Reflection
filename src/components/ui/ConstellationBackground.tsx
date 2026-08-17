@@ -5,6 +5,8 @@ export type ConstellationVariant = 'landing' | 'ambient' | 'results'
 interface ConstellationBackgroundProps {
   variant?: ConstellationVariant
   revealed?: boolean
+  d20Pulsing?: boolean
+  faded?: boolean
 }
 
 // ── D20 icosahedron geometry (viewBox 1440×900, center 720,450) ───────
@@ -178,6 +180,9 @@ const ANCHOR_DY = 315
 // Minimum buffer (in SVG units) between a rotated anchor and the clipped edge
 const ANCHOR_EDGE_MARGIN = 38
 
+// Maps anchor array index to clockwise reveal step: Race(TL)=0, Class(TR)=1, Background(BR)=2, Alignment(BL)=3
+const CLOCKWISE = [0, 1, 3, 2]
+
 function getMapTransform(vw: number, vh: number) {
   const t = Math.max(0, Math.min(1, (ROT_START - vw) / (ROT_START - ROT_END)))
   const angle    = t * 90
@@ -200,6 +205,8 @@ function getMapTransform(vw: number, vh: number) {
 export function ConstellationBackground({
   variant = 'ambient',
   revealed = false,
+  d20Pulsing = false,
+  faded = false,
 }: ConstellationBackgroundProps) {
   const [animated, setAnimated] = useState(false)
 
@@ -229,11 +236,27 @@ export function ConstellationBackground({
   const isLanding = variant === 'landing'
   const isResults = variant === 'results'
 
-  const d20Opacity        = isLanding ? 0.09 : 0.05
-  const lineOpacity       = animated  ? 0.04 : isLanding ? 0.22 : 0.10
-  const dotOpacity        = animated  ? 0.08 : isLanding ? 0.75 : 0.38
-  const profileOpacity    = animated  ? 0.5  : 0
-  const anchorBaseOpacity = animated  ? undefined : (isLanding ? 0.55 : 0.22)
+  // When faded, all elements dim back toward ambient regardless of reveal state
+  const d20Opacity     = faded ? 0.03 : (isLanding ? 0.09 : 0.05)
+  const lineOpacity    = faded ? 0.04 : (animated ? 0.04 : isLanding ? 0.22 : 0.10)
+  const dotOpacity     = faded ? 0.04 : (animated ? 0.08 : isLanding ? 0.75 : 0.38)
+  const profileOpacity = (animated && !faded) ? 0.5 : 0
+
+  // Per-anchor style drives three phases: ambient → clockwise reveal → clockwise fade-out
+  function getAnchorStyle(i: number) {
+    const step = CLOCKWISE[i]
+    const d    = step * 0.35
+    if (faded) {
+      return { transformOrigin: '0px 0px', animation: `icon-fade-out 0.55s ease-in-out ${d}s both` }
+    }
+    if (animated) {
+      return {
+        transformOrigin: '0px 0px',
+        animation: `anchor-reveal 1.05s cubic-bezier(0.16,1,0.3,1) ${d}s both, anchor-pulse 4.0s ease-in-out ${d + 1.05}s infinite`,
+      }
+    }
+    return { transformOrigin: '0px 0px', opacity: isLanding ? 0.55 : 0.22, transition: 'opacity 1.4s ease' }
+  }
 
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
@@ -280,8 +303,9 @@ export function ConstellationBackground({
             stroke="var(--color-primary)"
             strokeWidth="0.75"
             fill="none"
-            opacity={d20Opacity}
-            style={{ transition: 'opacity 2s ease' }}
+            style={d20Pulsing
+              ? { animation: 'd20-glow-pulse 1.6s ease-in forwards' }
+              : { opacity: d20Opacity, transition: 'opacity 2s ease' }}
           >
             <circle cx={CX} cy={CY} r={214} />
             {D20_SEGS.map(([x1, y1, x2, y2], i) => (
@@ -294,8 +318,9 @@ export function ConstellationBackground({
             stroke="var(--color-accent)"
             strokeWidth="0.55"
             fill="none"
-            opacity={lineOpacity}
-            style={{ transition: 'opacity 2.5s ease' }}
+            style={d20Pulsing
+              ? { animation: 'line-surge 1.4s ease-in-out 0.12s forwards' }
+              : { opacity: lineOpacity, transition: 'opacity 2.5s ease' }}
           >
             {CONST_LINES.map(([x1, y1, x2, y2], i) => (
               <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} />
@@ -340,17 +365,7 @@ export function ConstellationBackground({
               Inner <g> owns the CSS animation; transform-origin 0px 0px = anchor center.
             */
             <g key={anchor.id} transform={`translate(${anchor.x}, ${anchor.y})`}>
-              <g
-                style={{
-                  transformOrigin: '0px 0px',
-                  opacity: anchorBaseOpacity,
-                  transition: animated ? 'none' : 'opacity 1.4s ease',
-                  animation: animated
-                    ? `anchor-reveal 0.85s cubic-bezier(0.16,1,0.3,1) ${i * 0.2}s both,
-                       anchor-pulse  3.2s ease-in-out ${i * 0.2 + 0.85}s infinite`
-                    : 'none',
-                }}
-              >
+              <g style={getAnchorStyle(i)}>
                 {/* Dark surface so icon reads against the star field */}
                 <circle r={20} fill="var(--color-surface)" opacity={0.9} />
                 {/* Gold ring that constellation lines connect to */}
@@ -376,19 +391,6 @@ export function ConstellationBackground({
                   {anchor.paths}
                 </g>
 
-                {/* Ripple ring that expands on reveal */}
-                {animated && (
-                  <circle
-                    r={26}
-                    fill="none"
-                    stroke="var(--color-primary)"
-                    strokeWidth="1"
-                    style={{
-                      transformOrigin: '0px 0px',
-                      animation: `ripple 1.8s ease-out ${i * 0.22}s 2`,
-                    }}
-                  />
-                )}
               </g>
             </g>
           ))}
