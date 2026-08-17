@@ -35,37 +35,40 @@ export function LandingPage() {
         </p>
       </div>
 
-      {/* Four pillars */}
-      <div
-        className="flex items-center gap-3 flex-wrap justify-center"
-        aria-label="The four recommendations you will receive"
-      >
-        {CATEGORIES.map((cat, i) => (
-          <span key={cat.label} className="flex items-center gap-3">
-            <Badge variant="primary" className="text-label px-3 py-1 flex items-center gap-1.5">
-              <cat.icon size={14} strokeWidth={2} aria-hidden="true" />
-              {cat.label}
-            </Badge>
-            {i < CATEGORIES.length - 1 && (
-              <span
-                className="text-[var(--color-border)] text-xs"
-                aria-hidden="true"
-              >
-                ·
-              </span>
-            )}
-          </span>
-        ))}
-      </div>
+      {/* Badges + star + CTA grouped with tighter mobile spacing */}
+      <div className="flex flex-col items-center gap-5 sm:gap-8">
 
-      {/* Ornamental divider */}
-      <span className="text-[var(--color-primary)] text-base" aria-hidden="true">✦</span>
+        {/* Four pillars */}
+        <div
+          className="flex items-center gap-3 flex-wrap justify-center"
+          aria-label="The four recommendations you will receive"
+        >
+          {CATEGORIES.map((cat, i) => (
+            <span key={cat.label} className="flex items-center gap-3">
+              <Badge variant="primary" className="text-label px-3 py-1 flex items-center gap-1.5">
+                <cat.icon size={14} strokeWidth={2} aria-hidden="true" />
+                {cat.label}
+              </Badge>
+              {i < CATEGORIES.length - 1 && (
+                <span
+                  className="text-[var(--color-border)] text-xs"
+                  aria-hidden="true"
+                >
+                  ·
+                </span>
+              )}
+            </span>
+          ))}
+        </div>
 
-      {/* CTA */}
-      <div className="flex flex-col gap-4 items-center">
+        {/* Ornamental divider */}
+        <span className="text-[var(--color-primary)] text-base" aria-hidden="true">✦</span>
+
+        {/* CTA */}
         <Button size="lg" variant="primary" onClick={() => navigate('/setup')}>
           Begin the Assessment
         </Button>
+
       </div>
     </Container>
   )
