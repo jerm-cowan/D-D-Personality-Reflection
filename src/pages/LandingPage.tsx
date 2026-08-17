@@ -1,9 +1,18 @@
 import { useNavigate } from 'react-router-dom'
+import { Shield, Sword, Scale, BookOpen } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Container } from '@/components/layout/Container'
 
-const CATEGORIES = ['Race', 'Class', 'Alignment', 'Background'] as const
+// Must match the ANCHORS order in ConstellationBackground so badges visually
+// correspond to the corner nodes the user sees on screen.
+const CATEGORIES: { label: string; icon: LucideIcon }[] = [
+  { label: 'Race',       icon: Shield   },
+  { label: 'Class',      icon: Sword    },
+  { label: 'Alignment',  icon: Scale    },
+  { label: 'Background', icon: BookOpen },
+]
 
 export function LandingPage() {
   const navigate = useNavigate()
@@ -39,9 +48,10 @@ export function LandingPage() {
         aria-label="The four recommendations you will receive"
       >
         {CATEGORIES.map((cat, i) => (
-          <span key={cat} className="flex items-center gap-3">
-            <Badge variant="primary" className="text-label px-3 py-1">
-              {cat}
+          <span key={cat.label} className="flex items-center gap-3">
+            <Badge variant="primary" className="text-label px-3 py-1 flex items-center gap-1.5">
+              <cat.icon size={14} strokeWidth={2} aria-hidden="true" />
+              {cat.label}
             </Badge>
             {i < CATEGORIES.length - 1 && (
               <span

@@ -1,114 +1,58 @@
-import { useEffect, useState } from 'react'
-import { Shield, Sword, Scale, BookOpen } from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
+import { useEffect, useState, type ReactElement } from 'react'
 
 export type ConstellationVariant = 'landing' | 'ambient' | 'results'
 
 interface ConstellationBackgroundProps {
   variant?: ConstellationVariant
-  /** On the results page, trigger the constellation reveal animation */
   revealed?: boolean
 }
 
-// ── D20 geometry (viewBox 1440×900, D20 centered at 720,450) ──────────
+// ── D20 icosahedron geometry (viewBox 1440×900, center 720,450) ───────
 const CX = 720
 const CY = 450
 
-function pentagonRing(
-  cx: number,
-  cy: number,
-  r: number,
-  startAngle: number,
-): { x: number; y: number }[] {
+function pentagonRing(cx: number, cy: number, r: number, startAngle: number) {
   return Array.from({ length: 5 }, (_, i) => {
     const a = startAngle + (2 * Math.PI * i) / 5
     return { x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r }
   })
 }
 
-// Outer pentagon pointing up; inner pentagon rotated 36°
 const OUTER = pentagonRing(CX, CY, 200, -Math.PI / 2)
 const INNER = pentagonRing(CX, CY, 112, -Math.PI / 2 + Math.PI / 5)
 
 const D20_SEGS: [number, number, number, number][] = [
-  // Outer pentagon edges
-  ...OUTER.map(
-    (p, i) =>
-      [p.x, p.y, OUTER[(i + 1) % 5].x, OUTER[(i + 1) % 5].y] as [
-        number,
-        number,
-        number,
-        number,
-      ],
-  ),
-  // Inner pentagon edges
-  ...INNER.map(
-    (p, i) =>
-      [p.x, p.y, INNER[(i + 1) % 5].x, INNER[(i + 1) % 5].y] as [
-        number,
-        number,
-        number,
-        number,
-      ],
-  ),
-  // Outer → adjacent inner spokes
+  ...OUTER.map((p, i) => [p.x, p.y, OUTER[(i + 1) % 5].x, OUTER[(i + 1) % 5].y] as [number, number, number, number]),
+  ...INNER.map((p, i) => [p.x, p.y, INNER[(i + 1) % 5].x, INNER[(i + 1) % 5].y] as [number, number, number, number]),
   ...OUTER.flatMap((p, i) => [
     [p.x, p.y, INNER[i].x, INNER[i].y] as [number, number, number, number],
-    [p.x, p.y, INNER[(i + 4) % 5].x, INNER[(i + 4) % 5].y] as [
-      number,
-      number,
-      number,
-      number,
-    ],
+    [p.x, p.y, INNER[(i + 4) % 5].x, INNER[(i + 4) % 5].y] as [number, number, number, number],
   ]),
-  // Inner → center spokes
-  ...INNER.map(
-    p => [p.x, p.y, CX, CY] as [number, number, number, number],
-  ),
+  ...INNER.map(p => [p.x, p.y, CX, CY] as [number, number, number, number]),
 ]
 
-// ── Category anchor positions ─────────────────────────────────────────
-// SVG units match percentage of 1440×900 viewport
-const ANCHORS: {
-  id: string
-  icon: LucideIcon
-  label: string
-  x: number
-  y: number
-}[] = [
-  { id: 'race',       icon: Shield,   label: 'Race',       x: 144,  y: 135 },
-  { id: 'class',      icon: Sword,    label: 'Class',      x: 1296, y: 135 },
-  { id: 'alignment',  icon: Scale,    label: 'Alignment',  x: 144,  y: 765 },
-  { id: 'background', icon: BookOpen, label: 'Background', x: 1296, y: 765 },
-]
-
-// ── Constellation dot-star field ──────────────────────────────────────
+// ── Star field dots ───────────────────────────────────────────────────
 const DOTS: { id: string; x: number; y: number; r: number; cls: string }[] = [
-  // Race cluster (top-left)
-  { id: 'r1', x: 76,  y: 86,  r: 2,   cls: 'twinkle-a' },
-  { id: 'r2', x: 208, y: 74,  r: 1.5, cls: 'twinkle-c' },
-  { id: 'r3', x: 62,  y: 196, r: 1,   cls: 'twinkle-b' },
-  { id: 'r4', x: 242, y: 230, r: 2,   cls: 'twinkle-d' },
-  { id: 'r5', x: 318, y: 150, r: 1.5, cls: 'twinkle-e' },
-  // Class cluster (top-right)
+  { id: 'r1', x: 76,   y: 86,  r: 2,   cls: 'twinkle-a' },
+  { id: 'r2', x: 208,  y: 74,  r: 1.5, cls: 'twinkle-c' },
+  { id: 'r3', x: 62,   y: 196, r: 1,   cls: 'twinkle-b' },
+  { id: 'r4', x: 242,  y: 230, r: 2,   cls: 'twinkle-d' },
+  { id: 'r5', x: 318,  y: 150, r: 1.5, cls: 'twinkle-e' },
   { id: 'c1', x: 1364, y: 86,  r: 2,   cls: 'twinkle-b' },
   { id: 'c2', x: 1232, y: 74,  r: 1.5, cls: 'twinkle-a' },
   { id: 'c3', x: 1378, y: 196, r: 1,   cls: 'twinkle-d' },
   { id: 'c4', x: 1198, y: 230, r: 2,   cls: 'twinkle-c' },
   { id: 'c5', x: 1122, y: 150, r: 1.5, cls: 'twinkle-e' },
-  // Alignment cluster (bottom-left)
-  { id: 'a1', x: 76,  y: 814, r: 2,   cls: 'twinkle-c' },
-  { id: 'a2', x: 208, y: 826, r: 1.5, cls: 'twinkle-e' },
-  { id: 'a3', x: 62,  y: 704, r: 1,   cls: 'twinkle-a' },
-  { id: 'a4', x: 242, y: 670, r: 2,   cls: 'twinkle-b' },
-  { id: 'a5', x: 318, y: 750, r: 1.5, cls: 'twinkle-d' },
-  // Background cluster (bottom-right)
+  { id: 'a1', x: 76,   y: 814, r: 2,   cls: 'twinkle-c' },
+  { id: 'a2', x: 208,  y: 826, r: 1.5, cls: 'twinkle-e' },
+  { id: 'a3', x: 62,   y: 704, r: 1,   cls: 'twinkle-a' },
+  { id: 'a4', x: 242,  y: 670, r: 2,   cls: 'twinkle-b' },
+  { id: 'a5', x: 318,  y: 750, r: 1.5, cls: 'twinkle-d' },
   { id: 'b1', x: 1364, y: 814, r: 2,   cls: 'twinkle-d' },
   { id: 'b2', x: 1232, y: 826, r: 1.5, cls: 'twinkle-b' },
   { id: 'b3', x: 1378, y: 704, r: 1,   cls: 'twinkle-c' },
   { id: 'b4', x: 1198, y: 670, r: 2,   cls: 'twinkle-a' },
   { id: 'b5', x: 1122, y: 750, r: 1.5, cls: 'twinkle-e' },
-  // Middle scatter
   { id: 'm1',  x: 432,  y: 184, r: 1.5, cls: 'twinkle-b' },
   { id: 'm2',  x: 528,  y: 116, r: 2,   cls: 'twinkle-d' },
   { id: 'm3',  x: 636,  y: 158, r: 1,   cls: 'twinkle-a' },
@@ -133,36 +77,97 @@ const DOTS: { id: string; x: number; y: number; r: number; cls: string }[] = [
 
 // ── Constellation line network ────────────────────────────────────────
 const CONST_LINES: [number, number, number, number][] = [
-  // Race cluster
   [144, 135,  76,  86], [144, 135, 208,  74], [144, 135, 242, 230],
   [76,   86, 208,  74], [242, 230, 318, 150], [318, 150, 208,  74],
-  // Class cluster
   [1296, 135, 1364,  86], [1296, 135, 1232,  74], [1296, 135, 1198, 230],
   [1364,  86, 1232,  74], [1198, 230, 1122, 150], [1122, 150, 1232,  74],
-  // Alignment cluster
   [144, 765,  76, 814], [144, 765, 208, 826], [144, 765, 242, 670],
   [76,  814, 208, 826], [242, 670, 318, 750], [318, 750, 208, 826],
-  // Background cluster
   [1296, 765, 1364, 814], [1296, 765, 1232, 826], [1296, 765, 1198, 670],
   [1364, 814, 1232, 826], [1198, 670, 1122, 750], [1122, 750, 1232, 826],
-  // Middle bridge — top
   [432, 184,  528, 116], [ 528, 116,  636, 158],
   [804, 116,  912, 158], [ 912, 158, 1008, 184],
-  // Middle bridge — bottom
   [432, 716,  528, 784], [ 528, 784,  636, 742],
   [804, 784,  912, 742], [ 912, 742, 1008, 716],
-  // Side connectors
   [352, 360, 382, 254], [382, 254, 432, 184],
   [352, 540, 382, 646], [382, 646, 432, 716],
   [1088, 360, 1058, 254], [1058, 254, 1008, 184],
   [1088, 540, 1058, 646], [1058, 646, 1008, 716],
-  // Anchor → side node bridges
   [144, 135, 352, 360], [144, 765, 352, 540],
   [1296, 135, 1088, 360], [1296, 765, 1088, 540],
 ]
 
-// Profile quadrilateral perimeter ≈ 2*(1152) + 2*(630) = 3564
+// ── Category anchor nodes ─────────────────────────────────────────────
+// Each anchor embeds its Lucide icon paths (24×24 viewBox) as JSX.
+// Positioning is via SVG translate so icons are perfectly co-located
+// with the circle rings and rotate/scale together as one unit.
+interface AnchorDef {
+  id: string
+  label: string
+  x: number
+  y: number
+  paths: ReactElement
+}
+
+const ANCHORS: AnchorDef[] = [
+  {
+    id: 'race',
+    label: 'Race',
+    x: 144,
+    y: 135,
+    paths: (
+      <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+    ),
+  },
+  {
+    id: 'class',
+    label: 'Class',
+    x: 1296,
+    y: 135,
+    paths: (
+      <>
+        <path d="m11 19-6-6" />
+        <path d="m5 21-2-2" />
+        <path d="m8 16-4 4" />
+        <path d="M9.5 17.5 21 6V3h-3L6.5 14.5" />
+      </>
+    ),
+  },
+  {
+    id: 'alignment',
+    label: 'Alignment',
+    x: 144,
+    y: 765,
+    paths: (
+      <>
+        <path d="M12 3v18" />
+        <path d="m19 8 3 8a5 5 0 0 1-6 0zV7" />
+        <path d="M3 7h1a17 17 0 0 0 8-2 17 17 0 0 0 8 2h1" />
+        <path d="m5 8 3 8a5 5 0 0 1-6 0zV7" />
+        <path d="M7 21h10" />
+      </>
+    ),
+  },
+  {
+    id: 'background',
+    label: 'Background',
+    x: 1296,
+    y: 765,
+    paths: (
+      <>
+        <path d="M12 5v16" />
+        <path d="M20.001 19A2 2 0 0022 17V5a2 2 0 00-1.999-2L16 3.002A5 5 0 0012 5a5 5 0 00-4-2H4a2 2 0 00-2 2v12a2 2 0 001.999 2H8a5 5 0 014 2 5 5 0 014-2z" />
+      </>
+    ),
+  },
+]
+
+const PROFILE_PATH = 'M 144 135 L 1296 135 L 1296 765 L 144 765 Z'
 const PROFILE_PERIM = 3564
+
+// Lucide icon scale: render at 18px within a 24px viewBox, centered at (0,0)
+const ICON_SCALE  =  18 / 24   // 0.75
+const ICON_OFFSET = -(18 / 2)  // -9
 
 export function ConstellationBackground({
   variant = 'ambient',
@@ -182,19 +187,15 @@ export function ConstellationBackground({
   const isLanding = variant === 'landing'
   const isResults = variant === 'results'
 
-  // Derived opacity levels
-  const d20Opacity   = isLanding ? 0.09 : 0.05
-  const lineOpacity  = animated ? 0.04 : isLanding ? 0.22 : 0.10
-  const dotOpacity   = animated ? 0.08 : isLanding ? 0.75 : 0.38
-  const profileOpacity = animated ? 0.5 : 0
-  const anchorRingOpacity = animated ? 0.9 : isLanding ? 0.45 : 0.2
+  const d20Opacity        = isLanding ? 0.09 : 0.05
+  const lineOpacity       = animated  ? 0.04 : isLanding ? 0.22 : 0.10
+  const dotOpacity        = animated  ? 0.08 : isLanding ? 0.75 : 0.38
+  const profileOpacity    = animated  ? 0.5  : 0
+  const anchorBaseOpacity = animated  ? undefined : (isLanding ? 0.55 : 0.22)
 
   return (
-    <div
-      className="fixed inset-0 pointer-events-none overflow-hidden"
-      aria-hidden="true"
-    >
-      {/* Deep purple radial vignette at center */}
+    <div className="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+      {/* Central purple radial vignette */}
       <div
         className="absolute inset-0"
         style={{
@@ -203,7 +204,6 @@ export function ConstellationBackground({
         }}
       />
 
-      {/* SVG layer: D20 + stars + constellation lines */}
       <svg
         viewBox="0 0 1440 900"
         preserveAspectRatio="xMidYMid slice"
@@ -211,149 +211,140 @@ export function ConstellationBackground({
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
-          <radialGradient id="goldGlow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="var(--color-primary)" stopOpacity="0.4" />
+          <radialGradient id="cg-goldGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="var(--color-primary)" stopOpacity="0.35" />
             <stop offset="100%" stopColor="var(--color-primary)" stopOpacity="0" />
           </radialGradient>
         </defs>
 
-        {/* D20 icosahedron geometry */}
-        <g
-          stroke="var(--color-primary)"
-          strokeWidth="0.75"
-          fill="none"
-          opacity={d20Opacity}
-          style={{ transition: 'opacity 2s ease' }}
-        >
-          <circle cx={CX} cy={CY} r={214} />
-          {D20_SEGS.map(([x1, y1, x2, y2], i) => (
-            <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} />
-          ))}
-        </g>
+        {/*
+          Single coordinate-system group for all constellation content.
+          .constellation-rotate applies a 90° rotation on mobile so the
+          4-corner layout becomes top/right/bottom/left (portrait-friendly).
+          .constellation-transition enables the smooth animated rotation.
+        */}
+        <g className="constellation-rotate constellation-transition">
 
-        {/* Constellation lines */}
-        <g
-          stroke="var(--color-accent)"
-          strokeWidth="0.55"
-          fill="none"
-          opacity={lineOpacity}
-          style={{ transition: 'opacity 2.5s ease' }}
-        >
-          {CONST_LINES.map(([x1, y1, x2, y2], i) => (
-            <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} />
-          ))}
-        </g>
-
-        {/* Star field dots */}
-        <g style={{ transition: 'opacity 2.5s ease' }} opacity={dotOpacity}>
-          {DOTS.map(dot => (
-            <circle
-              key={dot.id}
-              cx={dot.x}
-              cy={dot.y}
-              r={dot.r}
-              fill="var(--color-foreground)"
-              className={dot.cls}
-            />
-          ))}
-        </g>
-
-        {/* Anchor ring indicators */}
-        {ANCHORS.map(anchor => (
-          <g key={`ring-${anchor.id}`}>
-            <circle
-              cx={anchor.x}
-              cy={anchor.y}
-              r={16}
-              fill="none"
-              stroke="var(--color-primary)"
-              strokeWidth="0.8"
-              opacity={anchorRingOpacity}
-              style={{ transition: 'opacity 1.4s ease' }}
-            />
-            {animated && (
-              <circle
-                cx={anchor.x}
-                cy={anchor.y}
-                r={16}
-                fill="url(#goldGlow)"
-                opacity={0.3}
-              />
-            )}
-          </g>
-        ))}
-
-        {/* Profile quadrilateral — draws in during results reveal */}
-        {isResults && (
-          <path
-            d="M 144 135 L 1296 135 L 1296 765 L 144 765 Z"
+          {/* D20 icosahedron outline */}
+          <g
             stroke="var(--color-primary)"
-            strokeWidth="0.7"
+            strokeWidth="0.75"
             fill="none"
-            opacity={profileOpacity}
-            strokeDasharray={PROFILE_PERIM}
-            strokeDashoffset={animated ? 0 : PROFILE_PERIM}
-            style={{
-              transition: `stroke-dashoffset 2.2s cubic-bezier(0.4,0,0.2,1) 0.4s, opacity 0.6s ease`,
-            }}
-          />
-        )}
+            opacity={d20Opacity}
+            style={{ transition: 'opacity 2s ease' }}
+          >
+            <circle cx={CX} cy={CY} r={214} />
+            {D20_SEGS.map(([x1, y1, x2, y2], i) => (
+              <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} />
+            ))}
+          </g>
 
-        {/* Ripple rings that fire once on each anchor when revealed */}
-        {animated &&
-          ANCHORS.map((anchor, i) => (
-            <circle
-              key={`ripple-${anchor.id}`}
-              cx={anchor.x}
-              cy={anchor.y}
-              r={18}
-              fill="none"
+          {/* Constellation line network */}
+          <g
+            stroke="var(--color-accent)"
+            strokeWidth="0.55"
+            fill="none"
+            opacity={lineOpacity}
+            style={{ transition: 'opacity 2.5s ease' }}
+          >
+            {CONST_LINES.map(([x1, y1, x2, y2], i) => (
+              <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} />
+            ))}
+          </g>
+
+          {/* Star field */}
+          <g opacity={dotOpacity} style={{ transition: 'opacity 2.5s ease' }}>
+            {DOTS.map(dot => (
+              <circle
+                key={dot.id}
+                cx={dot.x}
+                cy={dot.y}
+                r={dot.r}
+                fill="var(--color-foreground)"
+                className={dot.cls}
+              />
+            ))}
+          </g>
+
+          {/* Profile quadrilateral — draws in during results reveal */}
+          {isResults && (
+            <path
+              d={PROFILE_PATH}
               stroke="var(--color-primary)"
-              strokeWidth="1"
+              strokeWidth="0.7"
+              fill="none"
+              opacity={profileOpacity}
+              strokeDasharray={PROFILE_PERIM}
+              strokeDashoffset={animated ? 0 : PROFILE_PERIM}
               style={{
-                animation: `ripple 1.8s ease-out ${i * 0.22}s 2`,
-                transformOrigin: `${anchor.x}px ${anchor.y}px`,
+                transition:
+                  'stroke-dashoffset 2.2s cubic-bezier(0.4,0,0.2,1) 0.4s, opacity 0.6s ease',
               }}
             />
+          )}
+
+          {/* Category anchor nodes — circle ring + inline icon, perfectly co-located */}
+          {ANCHORS.map((anchor, i) => (
+            /*
+              Outer <g> positions in SVG user-space so lines terminate exactly here.
+              Inner <g> owns the CSS animation; transform-origin 0px 0px = anchor center.
+            */
+            <g key={anchor.id} transform={`translate(${anchor.x}, ${anchor.y})`}>
+              <g
+                style={{
+                  transformOrigin: '0px 0px',
+                  opacity: anchorBaseOpacity,
+                  transition: animated ? 'none' : 'opacity 1.4s ease',
+                  animation: animated
+                    ? `anchor-reveal 0.85s cubic-bezier(0.16,1,0.3,1) ${i * 0.2}s both,
+                       anchor-pulse  3.2s ease-in-out ${i * 0.2 + 0.85}s infinite`
+                    : 'none',
+                }}
+              >
+                {/* Dark surface so icon reads against the star field */}
+                <circle r={14} fill="var(--color-surface)" opacity={0.9} />
+                {/* Gold ring that constellation lines connect to */}
+                <circle
+                  r={16}
+                  fill={animated ? 'url(#cg-goldGlow)' : 'none'}
+                  stroke="var(--color-primary)"
+                  strokeWidth="0.9"
+                />
+                {/* Lucide icon inlined: translate(-9,-9) centers 18px icon at origin */}
+                <g
+                  transform={`translate(${ICON_OFFSET}, ${ICON_OFFSET}) scale(${ICON_SCALE})`}
+                  stroke="var(--color-primary)"
+                  fill="none"
+                  strokeWidth={1.6}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  {anchor.paths}
+                </g>
+
+                {/* Ripple ring that expands on reveal */}
+                {animated && (
+                  <circle
+                    r={18}
+                    fill="none"
+                    stroke="var(--color-primary)"
+                    strokeWidth="1"
+                    style={{
+                      transformOrigin: '0px 0px',
+                      animation: `ripple 1.8s ease-out ${i * 0.22}s 2`,
+                    }}
+                  />
+                )}
+              </g>
+            </g>
           ))}
+
+        </g>
       </svg>
-
-      {/* React icon overlay — category anchors */}
-      <div className="absolute inset-0">
-        {ANCHORS.map((anchor, i) => {
-          const Icon = anchor.icon
-          // Convert SVG coordinate to % of 1440×900 viewport
-          const left = (anchor.x / 1440) * 100
-          const top  = (anchor.y / 900) * 100
-
-          return (
-            <div
-              key={anchor.id}
-              className="absolute"
-              aria-label={anchor.label}
-              style={{
-                left: `${left}%`,
-                top:  `${top}%`,
-                // Pre-reveal: inline opacity controlled by variant
-                ...(animated ? {} : { opacity: isLanding ? 0.55 : 0.22 }),
-                // Post-reveal: animation takes over (fill-mode both)
-                animation: animated
-                  ? `anchor-reveal 0.85s cubic-bezier(0.16,1,0.3,1) ${i * 0.2}s both,
-                     anchor-pulse  3.2s ease-in-out ${i * 0.2 + 0.85}s infinite`
-                  : 'none',
-                transition: animated ? 'none' : 'opacity 1.4s ease',
-                transform: 'translate(-50%, -50%)',
-              }}
-            >
-              <Icon
-                size={18}
-                color="var(--color-primary)"
-                strokeWidth={1.5}
-              />
-            </div>
-          )
-        })}
-      </div>
     </div>
   )
 }
+
+// ── Anchor icon path data (Lucide 24×24 viewBox) ─────────────────────
+// Defined after the component so React JSX is resolved at module scope.
+// These literal path elements are embedded in the ANCHORS array above.
