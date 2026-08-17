@@ -21,9 +21,9 @@ const CATEGORY_CONFIG: Record<CategoryKey, { label: string; icon: LucideIcon }> 
 
 function OrnamentalDivider() {
   return (
-    <div className="flex items-center gap-3 py-1" aria-hidden="true">
+    <div className="flex items-center gap-4 py-2" aria-hidden="true">
       <div className="flex-1 border-t border-[var(--color-border)]" />
-      <span className="text-[var(--color-primary)] text-xs">✦</span>
+      <span className="text-[var(--color-primary)] text-base">✦</span>
       <div className="flex-1 border-t border-[var(--color-border)]" />
     </div>
   )
@@ -33,41 +33,50 @@ function RecommendationCard({
   categoryKey,
   rec,
   entryNumber,
+  animationDelay,
 }: {
   categoryKey: CategoryKey
   rec: Recommendation
   entryNumber: number
+  animationDelay: number
 }) {
   const { label, icon: Icon } = CATEGORY_CONFIG[categoryKey]
 
   return (
-    <Card className="relative overflow-hidden">
+    <Card
+      className="relative overflow-hidden reveal-card"
+      style={{ animationDelay: `${animationDelay}ms` }}
+    >
       {/* Gold left accent bar */}
       <div
         className="absolute inset-y-0 left-0 w-1 rounded-l-[var(--radius-large)] bg-[var(--color-primary)]"
         aria-hidden="true"
       />
 
-      <CardContent className="flex flex-col gap-4 py-6 pl-8">
+      <CardContent className="flex flex-col gap-5 py-7 pl-8 pr-7">
         {/* Category header */}
         <div className="flex items-center gap-2">
           <Icon size={14} className="text-[var(--color-primary)] shrink-0" aria-hidden="true" />
           <Badge variant="primary" className="text-label">{label}</Badge>
-          <span className="ml-auto text-body-sm text-muted tabular-nums">
+          <span className="ml-auto text-body-sm text-[var(--color-foreground-muted)] tabular-nums">
             {String(entryNumber).padStart(2, '0')}
           </span>
         </div>
 
-        {/* Recommendation name */}
+        {/* Recommendation name — the most prominent element */}
         <h2 className="text-display-sm text-[var(--color-foreground)]">{rec.name}</h2>
 
         <div className="border-t border-[var(--color-border-muted)]" aria-hidden="true" />
 
         {/* Explanation */}
-        <p className="text-body-md text-[var(--color-foreground)]">{rec.explanation}</p>
+        <p className="text-body-md text-[var(--color-foreground)] leading-relaxed">
+          {rec.explanation}
+        </p>
 
         {/* Per-category rationale */}
-        <p className="text-body-sm text-muted">{rec.rationale}</p>
+        <p className="text-body-sm text-[var(--color-foreground-muted)] leading-relaxed">
+          {rec.rationale}
+        </p>
       </CardContent>
     </Card>
   )
@@ -80,7 +89,7 @@ export function ResultsPage() {
   const answeredCount = Object.keys(answers).length
   if (answeredCount < questions.length) {
     return (
-      <Container size="sm" className="py-12 flex flex-col gap-6">
+      <Container size="md" className="py-16 flex flex-col gap-6">
         <p className="text-body-md text-[var(--color-warning)]">
           Your assessment is incomplete. Please finish all questions before viewing results.
         </p>
@@ -101,10 +110,10 @@ export function ResultsPage() {
   }
 
   return (
-    <Container size="sm" className="py-12 flex flex-col gap-8">
+    <Container size="md" className="py-16 flex flex-col gap-10">
 
       {/* Dossier header */}
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-4">
         <div className="flex items-center gap-2 flex-wrap">
           <Badge variant="primary" className="text-label">Recommendation Dossier</Badge>
           {isCharacterMode && (
@@ -114,7 +123,7 @@ export function ResultsPage() {
         <h1 className="text-display-md text-[var(--color-foreground)]">
           {name ?? 'Adventurer Profile'}
         </h1>
-        <p className="text-body-md text-muted">
+        <p className="text-body-md text-[var(--color-foreground-muted)]">
           {name
             ? `Four foundational D&D character recommendations based on ${name}'s responses.`
             : 'Four foundational D&D character recommendations based on your responses.'}
@@ -123,21 +132,24 @@ export function ResultsPage() {
 
       <OrnamentalDivider />
 
-      {/* Recommendation cards */}
-      <div className="flex flex-col gap-4">
-        <RecommendationCard categoryKey="race"       rec={profile.race}       entryNumber={1} />
-        <RecommendationCard categoryKey="class"      rec={profile.class}      entryNumber={2} />
-        <RecommendationCard categoryKey="alignment"  rec={profile.alignment}  entryNumber={3} />
-        <RecommendationCard categoryKey="background" rec={profile.background} entryNumber={4} />
+      {/* Recommendation cards with stagger */}
+      <div className="flex flex-col gap-5">
+        <RecommendationCard categoryKey="race"       rec={profile.race}       entryNumber={1} animationDelay={200}  />
+        <RecommendationCard categoryKey="class"      rec={profile.class}      entryNumber={2} animationDelay={450}  />
+        <RecommendationCard categoryKey="alignment"  rec={profile.alignment}  entryNumber={3} animationDelay={700}  />
+        <RecommendationCard categoryKey="background" rec={profile.background} entryNumber={4} animationDelay={950}  />
       </div>
 
       <OrnamentalDivider />
 
-      {/* Overall rationale — surface-muted panel, not a fifth recommendation card */}
-      <div className="rounded-[var(--radius-large)] border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-6 flex flex-col gap-4">
+      {/* Overall rationale panel */}
+      <div
+        className="reveal-card rounded-[var(--radius-large)] border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-8 flex flex-col gap-4"
+        style={{ animationDelay: '1200ms' }}
+      >
         <div className="flex items-center gap-2">
           <Scroll size={14} className="text-[var(--color-primary)] shrink-0" aria-hidden="true" />
-          <span className="text-label text-[var(--color-primary)] uppercase tracking-widest">
+          <span className="text-label text-[var(--color-primary)] tracking-widest">
             Why These Recommendations Work Together
           </span>
         </div>

@@ -32,7 +32,7 @@ export function SetupPage() {
   }
 
   return (
-    <Container size="sm" className="py-12 flex flex-col gap-8">
+    <Container size="md" className="py-16 flex flex-col gap-10">
       <div className="flex flex-col gap-2">
         <h1 className="text-display-sm text-[var(--color-foreground)]">Assessment Setup</h1>
         <p className="text-body-md text-muted">Choose how you want to answer before we begin.</p>

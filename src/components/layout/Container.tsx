@@ -7,9 +7,9 @@ interface ContainerProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 const sizeClasses: Record<NonNullable<ContainerProps['size']>, string> = {
-  sm:   'max-w-2xl',
-  md:   'max-w-4xl',
-  lg:   'max-w-6xl',
+  sm:   'max-w-3xl',
+  md:   'max-w-5xl',
+  lg:   'max-w-7xl',
   full: 'max-w-none',
 }
 

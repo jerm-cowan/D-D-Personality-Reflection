@@ -55,7 +55,7 @@ export function AssessmentPage() {
   const progressPct = Math.round(((index - 1) / TOTAL) * 100)
 
   return (
-    <Container size="sm" className="py-12 flex flex-col gap-8">
+    <Container size="md" className="py-16 flex flex-col gap-10">
 
       {/* Progress */}
       <div className="flex flex-col gap-2">
@@ -73,10 +73,10 @@ export function AssessmentPage() {
           aria-valuemin={1}
           aria-valuemax={TOTAL}
           aria-label="Assessment progress"
-          className="h-1 rounded-full bg-[var(--color-border)]"
+          className="h-1.5 rounded-full bg-[var(--color-border)]"
         >
           <div
-            className="h-full rounded-full bg-[var(--color-primary)] transition-all duration-300"
+            className="h-full rounded-full bg-[var(--color-primary)] transition-all duration-500"
             style={{ width: `${progressPct}%` }}
           />
         </div>
@@ -88,7 +88,7 @@ export function AssessmentPage() {
           {question.text}
         </h1>
 
-        <fieldset className="flex flex-col gap-3 border-none p-0 m-0">
+        <fieldset className="flex flex-col gap-4 border-none p-0 m-0">
           <legend className="sr-only">Choose one answer</legend>
           {question.options.map((option) => {
             const isSelected = selectedOptionId === option.id

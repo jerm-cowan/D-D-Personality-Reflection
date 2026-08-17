@@ -19,6 +19,7 @@ const buttonVariants = cva(
           'bg-[var(--color-primary)] text-[var(--color-background)]',
           'hover:bg-[var(--color-primary-hover)]',
           'rounded-[var(--radius-medium)]',
+          'tracking-wide',
         ],
         secondary: [
           'bg-[var(--color-surface)] text-[var(--color-foreground)]',
@@ -38,9 +39,9 @@ const buttonVariants = cva(
         ],
       },
       size: {
-        sm: 'h-8  px-3 text-xs',
-        md: 'h-10 px-4 text-sm',
-        lg: 'h-12 px-6 text-base',
+        sm: 'h-8  px-4 text-xs',
+        md: 'h-10 px-6 text-sm',
+        lg: 'h-13 px-10 text-base',
       },
     },
     defaultVariants: {

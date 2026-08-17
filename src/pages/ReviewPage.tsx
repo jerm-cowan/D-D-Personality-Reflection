@@ -27,7 +27,7 @@ export function ReviewPage() {
   }
 
   return (
-    <Container size="sm" className="py-12 flex flex-col gap-8">
+    <Container size="md" className="py-16 flex flex-col gap-10">
 
       {/* Header */}
       <div className="flex flex-col gap-2">
