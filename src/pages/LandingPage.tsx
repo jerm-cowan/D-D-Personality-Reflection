@@ -20,25 +20,18 @@ export function LandingPage() {
   return (
     <Container
       size="lg"
-      className="min-h-screen flex flex-col justify-center items-center text-center py-24 gap-14"
+      className="min-h-screen flex flex-col justify-center items-center text-center py-24 gap-10"
     >
-      {/* Guild eyebrow */}
-      <div className="flex items-center gap-3 text-[var(--color-foreground-muted)]">
-        <span className="text-label tracking-widest">Adventurers Guild</span>
-        <span className="text-[var(--color-primary)] text-xs" aria-hidden="true">✦</span>
-        <span className="text-label tracking-widest">Character Discovery</span>
-      </div>
-
       {/* Main title block */}
-      <div className="flex flex-col gap-6 max-w-2xl">
+      <div className="flex flex-col gap-6">
         <h1 className="text-display-lg leading-tight text-[var(--color-foreground)]">
           D&amp;D Personality
           <br />
           <span className="text-[var(--color-primary)]">Reflection</span>
         </h1>
-        <p className="text-body-lg text-[var(--color-foreground-muted)] leading-relaxed">
-          Discover which Race, Class, Alignment, and Background resonate with
-          your personality — through reflection, not rules.
+        <p className="text-body-lg text-[var(--color-foreground-muted)] leading-relaxed w-full max-w-[600px]">
+          Discover core traits of your next D&amp;D character that resonate with who you are or how you want
+          to play. Focused on reflection, not rules. Only 12 questions and no D&amp;D experience required.
         </p>
       </div>
 
@@ -65,21 +58,14 @@ export function LandingPage() {
         ))}
       </div>
 
-      {/* Ornamental rule */}
-      <div className="flex items-center gap-4 w-full max-w-xs" aria-hidden="true">
-        <div className="flex-1 border-t border-[var(--color-border)]" />
-        <span className="text-[var(--color-primary)] text-sm">✦</span>
-        <div className="flex-1 border-t border-[var(--color-border)]" />
-      </div>
+      {/* Ornamental divider */}
+      <span className="text-[var(--color-primary)] text-base" aria-hidden="true">✦</span>
 
       {/* CTA */}
       <div className="flex flex-col gap-4 items-center">
         <Button size="lg" variant="primary" onClick={() => navigate('/setup')}>
           Begin the Assessment
         </Button>
-        <p className="text-body-sm text-[var(--color-foreground-muted)]">
-          12 questions &middot; No D&amp;D experience required
-        </p>
       </div>
     </Container>
   )
