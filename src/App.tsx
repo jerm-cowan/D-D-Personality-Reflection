@@ -5,9 +5,11 @@ import { SetupPage } from '@/pages/SetupPage'
 import { AssessmentPage } from '@/pages/AssessmentPage'
 import { ReviewPage } from '@/pages/ReviewPage'
 import { ResultsPage } from '@/pages/ResultsPage'
+import { AssessmentProvider } from '@/context/AssessmentContext'
 
 export default function App() {
   return (
+    <AssessmentProvider>
     <BrowserRouter>
       <PageLayout>
         <Routes>
@@ -20,5 +22,6 @@ export default function App() {
         </Routes>
       </PageLayout>
     </BrowserRouter>
+    </AssessmentProvider>
   )
 }
